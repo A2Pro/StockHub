@@ -25,7 +25,7 @@ def scrape_wsb():
         title = entry["data"]["title"]
         replaced_title = replace_tickers_with_titles(title, ticker_to_title)
         titles.append(replaced_title)
-    print(titles)
+    return titles
 
 def scrape_stocksr():
     response = requests.get("https://www.reddit.com/r/stocks/.json", headers={'User-agent': 'Mozilla/5.0'})
@@ -35,7 +35,7 @@ def scrape_stocksr():
         title = entry["data"]["title"]
         replaced_title = replace_tickers_with_titles(title, ticker_to_title)
         titles.append(replaced_title)
-    print(titles)
+    return titles
 
 def scrape_stockspicksr():
     response = requests.get("https://www.reddit.com/r/Stocks_Picks/.json", headers={'User-agent': 'Mozilla/5.0'})
@@ -45,7 +45,7 @@ def scrape_stockspicksr():
         title = entry["data"]["title"]
         replaced_title = replace_tickers_with_titles(title, ticker_to_title)
         titles.append(replaced_title)
-    print(titles)
+    return titles
 
 def scrape_robinhoodpennystocksr():
     response = requests.get("https://www.reddit.com/r/RobinHoodPennyStocks/.json", headers={'User-agent': 'Mozilla/5.0'})
@@ -55,7 +55,7 @@ def scrape_robinhoodpennystocksr():
         title = entry["data"]["title"]
         replaced_title = replace_tickers_with_titles(title, ticker_to_title)
         titles.append(replaced_title)
-    print(titles)
+    return titles
 
 def scrape_forbes():
     response = requests.get("https://www.forbes.com/markets/")
@@ -67,7 +67,7 @@ def scrape_forbes():
         replaced_title = replace_tickers_with_titles(title_text, ticker_to_title)
         titles.append(replaced_title)
     for title in titles:
-        print(title)
+        return title
 
 def scrape_yahoo():
     response = requests.get("https://finance.yahoo.com/topic/stock-market-news/")
@@ -79,7 +79,7 @@ def scrape_yahoo():
         replaced_title = replace_tickers_with_titles(title_text, ticker_to_title)
         titles.append(replaced_title)
     for title in titles:
-        print(title)
+        return title
 
 scrape_wsb()
 scrape_stocksr()
