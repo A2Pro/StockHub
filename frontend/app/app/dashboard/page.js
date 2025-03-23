@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Navbar from '../components/navbar.js';
 
 const Dashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,38 +10,33 @@ const Dashboard = () => {
   const [currentTab, setCurrentTab] = useState("overview");
 
   useEffect(() => {
-    // Check if user is logged in
     const checkAuth = async () => {
-      // First check local storage
+
       const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       
       if (!isLoggedIn || !user.email) {
-        // Redirect to login if no local storage data
+
         window.location.href = "/login";
         return;
       }
       
       try {
-        // Verify with backend
         const response = await fetch("http://localhost:9284/verify_auth", {
           method: "GET",
-          credentials: "include", // This sends the session cookie
+          credentials: "include", 
         });
         
         if (response.ok) {
           setIsAuthenticated(true);
           setUserData(user);
         } else {
-          // If backend verification fails, redirect to login
           localStorage.removeItem("isLoggedIn");
           localStorage.removeItem("user");
           window.location.href = "/login";
         }
       } catch (error) {
         console.error("Auth verification error:", error);
-        // If there's a connection error, we'll trust the local storage for now
-        // but show a connection warning
         setIsAuthenticated(true);
         setUserData(user);
       } finally {
@@ -52,11 +48,9 @@ const Dashboard = () => {
   }, []);
 
   const handleLogout = () => {
-    // Clear local storage
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("user");
-    
-    // Redirect to login page
+
     window.location.href = "/login";
   };
 
@@ -72,8 +66,9 @@ const Dashboard = () => {
   }
 
   return (
+    <>
+    <Navbar />
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center">
@@ -106,9 +101,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {["overview", "analytics", "settings"].map((tab) => (
@@ -126,8 +119,6 @@ const Dashboard = () => {
             ))}
           </nav>
         </div>
-
-        {/* Dashboard Greeting */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -140,14 +131,12 @@ const Dashboard = () => {
           </p>
         </motion.div>
 
-        {/* Dashboard Content Based on Tab */}
         {currentTab === "overview" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
           >
-            {/* Quick Stats Cards */}
             {["Visits", "Sales", "Conversion Rate"].map((stat, index) => (
               <div
                 key={stat}
@@ -221,6 +210,7 @@ const Dashboard = () => {
         )}
       </main>
     </div>
+    </>
   );
 };
 

@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FiArrowUpRight } from "react-icons/fi";
 
-// Main page component - this export is important for Next.js routing
 export default function LoginPage() {
   return (
     <section className="min-h-screen bg-black">
@@ -28,14 +27,13 @@ const LoginForm = () => {
     setIsLoading(true);
     setMessage("");
     setMessageType("error");
-
-    // Validate input fields
+  
     if (!email || !password) {
       setMessage("All fields are required");
       setIsLoading(false);
       return;
     }
-
+  
     try {
       const response = await fetch("http://localhost:9284/login", {
         method: "POST",
@@ -44,25 +42,25 @@ const LoginForm = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await response.json();
-      
+  
       if (data.message === "success") {
         setMessage("Login successful! Redirecting...");
         setMessageType("success");
-        
-        // Save user session info
+  
         localStorage.setItem("user", JSON.stringify({ email: data.username || email }));
         localStorage.setItem("isLoggedIn", "true");
-        
-        // Redirect with multiple methods for reliability
+  
+        // Set email in a cookie (expires in 7 days)
+        document.cookie = `email=${email}; max-age=${7 * 24 * 60 * 60}; path=/`;
+  
         setTimeout(() => {
           try {
             console.log("Redirecting to dashboard...");
             window.location.replace("/dashboard");
           } catch (error) {
             console.error("Redirection error:", error);
-            // Fallback
             window.location.href = "/dashboard";
           }
         }, 1500);

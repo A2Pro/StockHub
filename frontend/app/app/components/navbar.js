@@ -16,7 +16,7 @@ const Sidebar = () => {
   const [open, setOpen] = useState(true);
   const [selected, setSelected] = useState("Dashboard");
 
-  return (
+  return (  
     <motion.nav
       layout
       className="sticky top-0 h-screen shrink-0 border-r border-slate-300 bg-white p-2"
@@ -31,12 +31,12 @@ const Sidebar = () => {
           Icon={FiHome}
           title="Dashboard"
           selected={selected}
-          setSelected={setSelected}
+          setSelected={setSelected} 
           open={open}
         />
         <Option
           Icon={FiDollarSign}
-          title="Sales"
+          title="News"
           selected={selected}
           setSelected={setSelected}
           open={open}
@@ -44,35 +44,21 @@ const Sidebar = () => {
         />
         <Option
           Icon={FiMonitor}
-          title="View Site"
+          title="Bots"
           selected={selected}
           setSelected={setSelected}
           open={open}
         />
         <Option
           Icon={FiShoppingCart}
-          title="Products"
+          title="Copy Trade"
           selected={selected}
           setSelected={setSelected}
           open={open}
         />
         <Option
           Icon={FiTag}
-          title="Tags"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
-        <Option
-          Icon={FiBarChart}
-          title="Analytics"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
-        <Option
-          Icon={FiUsers}
-          title="Members"
+          title="Manual"
           selected={selected}
           setSelected={setSelected}
           open={open}
@@ -85,16 +71,18 @@ const Sidebar = () => {
 };
 
 const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
+  const handleClick = () => {
+    setSelected(title);
+    window.location.href = `/${title.toLowerCase().replace(/\s+/g, '')}`;
+  };
+
   return (
     <motion.button
       layout
-      onClick={() => setSelected(title)}
+      onClick={handleClick}
       className={`relative flex h-10 w-full items-center rounded-md transition-colors ${selected === title ? "bg-indigo-100 text-indigo-800" : "text-slate-500 hover:bg-slate-100"}`}
     >
-      <motion.div
-        layout
-        className="grid h-full w-10 place-content-center text-lg"
-      >
+      <motion.div layout className="grid h-full w-10 place-content-center text-lg">
         <Icon />
       </motion.div>
       {open && (
@@ -112,10 +100,7 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
       {notifs && open && (
         <motion.span
           initial={{ scale: 0, opacity: 0 }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-          }}
+          animate={{ opacity: 1, scale: 1 }}
           style={{ y: "-50%" }}
           transition={{ delay: 0.5 }}
           className="absolute right-2 top-1/2 size-4 rounded bg-indigo-500 text-xs text-white"
@@ -128,6 +113,11 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
 };
 
 const TitleSection = ({ open }) => {
+  
+  const cookie = document.cookie;
+  const emailMatch = cookie.match(/email=([^;]+)/);
+  const email = emailMatch ? emailMatch[1] : "Guest";
+
   return (
     <div className="mb-3 border-b border-slate-300 pb-3">
       <div className="flex cursor-pointer items-center justify-between rounded-md transition-colors hover:bg-slate-100">
@@ -140,8 +130,7 @@ const TitleSection = ({ open }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.125 }}
             >
-              <span className="block text-xs font-semibold">TomIsLoading</span>
-              <span className="block text-xs text-slate-500">Pro Plan</span>
+              <span className="block text-xs text-black  font-semibold">{email || 'Loading'}</span>
             </motion.div>
           )}
         </div>

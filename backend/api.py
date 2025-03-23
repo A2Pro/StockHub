@@ -85,7 +85,7 @@ def verify_auth():
             "message": "not_authenticated"
         }), 401
     
-@app.route("/login")
+@app.route("/login", methods=["POST", "GET"])
 def login():
     data = request.get_json()
     username = data.get("email")
