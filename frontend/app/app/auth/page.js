@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { redirectTo } from "../utils/redirect";
@@ -6,7 +5,6 @@ import { redirectTo } from "../utils/redirect";
 const Form = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [retypePassword, setRetypePassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("error");
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +45,7 @@ const Form = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:9284/signup", {
+      const response = await fetch("http://localhost:9284/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,80 +90,50 @@ const Form = () => {
       whileInView="animate"
       transition={{ staggerChildren: 0.05 }}
       viewport={{ once: true }}
-      className="flex items-center justify-center pb-4 pt-20 md:py-20"
+      className="flex items-center justify-center min-h-screen bg-black"
     >
-      <div className="mx-auto my-auto max-w-lg px-4 md:pr-0">
-        <motion.h1
-          variants={primaryVariants}
-          className="mb-2 text-center text-4xl font-semibold"
-        >
-          Create your account
+      <div className="max-w-md w-full p-6 bg-white rounded shadow">
+        <motion.h1 variants={primaryVariants} className="text-2xl font-semibold mb-6 text-center">
+          Sign In
         </motion.h1>
-        <motion.p variants={primaryVariants} className="mb-8 text-center">
-          Try it free for 30 days, no CC required
-        </motion.p>
 
-        <form onSubmit={onSubmit} className="w-full">
-          <motion.div variants={primaryVariants} className="mb-2 w-full">
-            <label htmlFor="email-input" className="mb-1 inline-block text-sm font-medium">
-              Email<span className="text-red-600">*</span>
+        <form onSubmit={onSubmit}>
+          <motion.div variants={primaryVariants} className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
+              Email
             </label>
             <input
-              id="email-input"
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full rounded border-[1px] border-slate-300 px-2.5 py-1.5 focus:outline-indigo-600"
               required
+              className="w-full border border-gray-300 rounded px-3 py-2"
             />
           </motion.div>
 
-          <motion.div variants={primaryVariants} className="mb-2 w-full">
-            <label htmlFor="password-input" className="mb-1 inline-block text-sm font-medium">
-              Password<span className="text-red-600">*</span>
+          <motion.div variants={primaryVariants} className="mb-4">
+            <label htmlFor="password" className="block text-sm font-medium mb-1">
+              Password
             </label>
             <input
-              id="password-input"
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="w-full rounded border-[1px] border-slate-300 px-2.5 py-1.5 focus:outline-indigo-600"
               required
+              className="w-full border border-gray-300 rounded px-3 py-2"
             />
           </motion.div>
 
-          <motion.div variants={primaryVariants} className="mb-4 w-full">
-            <label htmlFor="rt-password-input" className="mb-1 inline-block text-sm font-medium">
-              Re-type Password<span className="text-red-600">*</span>
-            </label>
-            <input
-              id="rt-password-input"
-              type="password"
-              value={retypePassword}
-              onChange={(e) => setRetypePassword(e.target.value)}
-              placeholder="Re-type your password"
-              className="w-full rounded border-[1px] border-slate-300 px-2.5 py-1.5 focus:outline-indigo-600"
-              required
-            />
-          </motion.div>
-
-          <motion.div variants={primaryVariants} className="mb-4 flex items-start gap-1.5">
-            <input
-              type="checkbox"
-              id="terms-checkbox"
-              className="h-4 w-4 accent-indigo-600"
-              required
-            />
-            <label htmlFor="terms-checkbox" className="text-xs">
-              By signing up, I agree to the terms and conditions, privacy policy, and cookie policy
-            </label>
-          </motion.div>
+          {message && (
+            <motion.p variants={primaryVariants} className="text-sm text-red-500 mb-4 text-center">
+              {message}
+            </motion.p>
+          )}
 
           <motion.button
             variants={primaryVariants}
-            whileTap={{ scale: 0.985 }}
             type="submit"
             disabled={isLoading}
             className="mb-1.5 w-full rounded bg-indigo-600 px-4 py-2 text-center font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400"
