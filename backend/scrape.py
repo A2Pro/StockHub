@@ -45,7 +45,7 @@ def scrape_stockspicksr():
         title = entry["data"]["title"]
         replaced_title = replace_tickers_with_titles(title, ticker_to_title)
         titles.append(replaced_title)
-    print(titles)
+    return titles
 
 def scrape_robinhoodpennystocksr():
     response = requests.get("https://www.reddit.com/r/RobinHoodPennyStocks/.json", headers={'User-agent': 'Mozilla/5.0'})
@@ -55,7 +55,7 @@ def scrape_robinhoodpennystocksr():
         title = entry["data"]["title"]
         replaced_title = replace_tickers_with_titles(title, ticker_to_title)
         titles.append(replaced_title)
-    print(titles)
+    return titles
 
 def scrape_forbes():
     response = requests.get("https://www.forbes.com/markets/")
@@ -66,8 +66,7 @@ def scrape_forbes():
         title_text = title_tag.get_text(strip=True)
         replaced_title = replace_tickers_with_titles(title_text, ticker_to_title)
         titles.append(replaced_title)
-    for title in titles:
-        print(title)
+    return titles
 
 def scrape_yahoo():
     response = requests.get("https://finance.yahoo.com/topic/stock-market-news/")
@@ -78,12 +77,5 @@ def scrape_yahoo():
         title_text = title.get_text(strip=True)
         replaced_title = replace_tickers_with_titles(title_text, ticker_to_title)
         titles.append(replaced_title)
-    for title in titles:
-        print(title)
+    return titles
 
-scrape_wsb()
-scrape_stocksr()
-scrape_stockspicksr()
-scrape_robinhoodpennystocksr()
-scrape_forbes()
-scrape_yahoo()

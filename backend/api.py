@@ -1,3 +1,5 @@
+#Written by A2Pro (Aayush Palai)
+
 from flask import Flask, render_template, jsonify, session
 from pymongo.mongo_client import MongoClient
 from dotenv import load_dotenv
@@ -33,7 +35,7 @@ app = Flask(__name__)
 def index():
     return render_template("index.html")
 
-@app.route("/login/<string:username/<string:password>")
+@app.route("/login/<string:username>/<string:password>")
 def login(username, password):
     entry = passwordsDB.find_one({"username" : username})
     if(not entry):
@@ -45,7 +47,7 @@ def login(username, password):
         else:
             return jsonify({"message" : "invalid_password"})
 
-@app.route("/signup/<string:username>/<string:password")
+@app.route("/signup/<string:username>/<string:password>")
 def signup(username, password):
     entry = passwordsDB.find_one({"username" : username})
     if(entry):
@@ -65,7 +67,8 @@ def answer_question(question):
 
     contextString  = ""
     for title in session["titles"]:
-        contextString += title
+        for titlex in title:
+            contextString += title
     completion = openAIClient.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
@@ -77,6 +80,7 @@ def answer_question(question):
     ]
     )
     return(completion.choices[0].message.content)
+
 
 
 app.run(port = 9284)   
