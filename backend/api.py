@@ -1,13 +1,14 @@
 from flask import Flask, render_template, jsonify, session, request
 from pymongo.mongo_client import MongoClient
 from flask_cors import CORS
-
 from dotenv import load_dotenv
 import os 
 import requests
 import pandas as pd
 import time
-
+import PyPDF2
+import io
+from werkzeug.utils import secure_filename
 from pymongo.server_api import ServerApi
 from openai import OpenAI
 from scrape import replace_tickers_with_titles, scrape_forbes, scrape_robinhoodpennystocksr, scrape_stockspicksr, scrape_stocksr, scrape_wsb, scrape_yahoo
@@ -333,5 +334,62 @@ def get_sectors():
         "sectors": list(sectors.keys())
     }), 200
 
+@app.route("/analyze_bank_statement", methods=["POST"])
+def analyze_bank_statement():
+    if "username" not in session:
+        return jsonify({"message": "not_authenticated"}), 401
+    
+    # Check if file was included in the request
+    if 'pdf_file' not in request.files:
+        return jsonify({"message": "no_file_uploaded"}), 400
+    
+    pdf_file = request.files['pdf_file']
+    
+    # Validate file type
+    if pdf_file.filename == '' or not pdf_file.filename.lower().endswith('.pdf'):
+        return jsonify({"message": "invalid_file_type"}), 400
+    
+    try:
+        # Read the PDF file
+        pdf_bytes = io.BytesIO(pdf_file.read())
+        
+        # Create a PDF reader object
+        pdf_reader = PyPDF2.PdfReader(pdf_bytes)
+        
+        # Extract text from all pages
+        text = ""
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            text += page.extract_text()
+        
+        # Create the prompt for OpenAI
+        prompt = """This is a bank statement in PDF form. Give me a rundown of my expenses, including things I'm spending too much on, and help me see if there's fraudulent activity.
+
+Bank Statement Contents:
+"""
+        # Combine prompt with extracted text
+        full_prompt = prompt + text
+        
+        # Call OpenAI API
+        completion = openAIClient.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a helpful financial assistant that analyzes bank statements."},
+                {"role": "user", "content": full_prompt}
+            ]
+        )
+        
+        # Extract and return the AI response
+        analysis = completion.choices[0].message.content
+        
+        return jsonify({
+            "message": "success",
+            "analysis": analysis
+        }), 200
+        
+    except Exception as e:
+        print(f"Error processing PDF: {str(e)}")
+        return jsonify({"message": "processing_error", "error": str(e)}), 500
+    
 if __name__ == "__main__":
     app.run(port=9284)
