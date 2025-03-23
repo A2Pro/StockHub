@@ -1,18 +1,31 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, session
 from pymongo.mongo_client import MongoClient
 from dotenv import load_dotenv
 import os 
 from pymongo.server_api import ServerApi
+from openai import OpenAI
 from scrape import replace_tickers_with_titles, scrape_forbes, scrape_robinhoodpennystocksr, scrape_stockspicksr, scrape_stocksr, scrape_wsb, scrape_yahoo
 
 load_dotenv()
 mongoUri = os.getenv("MONGO_URI_STRING")
 openAIKey = os.getenv("OPENAI_API_KEY")
+openAIClient = OpenAI(api_key = openAIKey)
 
 mongoClient = MongoClient(mongoUri, server_api=ServerApi('1'))
 db = mongoClient["Login"]
 passwordsDB = db["Passwords"]
 
+def refresh_titles():
+    titles = []
+    titles.append(scrape_forbes())
+    titles.append(scrape_robinhoodpennystocksr())
+    titles.append(scrape_stockspicksr())
+    titles.append(scrape_stocksr())
+    titles.append(scrape_yahoo())
+    titles.append(scrape_wsb())
+    for title in titles:
+        replace_tickers_with_titles(title)
+    return titles
 
 app = Flask(__name__)
 
@@ -27,6 +40,7 @@ def login(username, password):
         return jsonify({"message" : "user_not_found"})
     if entry:
         if(entry["password"] == password):
+            session["username"] = username
             return jsonify({"message" : "success"})
         else:
             return jsonify({"message" : "invalid_password"})
@@ -41,16 +55,28 @@ def signup(username, password):
 
 @app.route("/refresh_data")
 def refresh_data():
-    titles = []
-    titles.append(scrape_forbes())
-    titles.append(scrape_robinhoodpennystocksr())
-    titles.append(scrape_stockspicksr())
-    titles.append(scrape_stocksr())
-    titles.append(scrape_yahoo())
-    titles.append(scrape_wsb())
-    for title in titles:
-        replace_tickers_with_titles(title)
-    return jsonify({"titles" : titles})
+    session["titles"] = refresh_titles()
+    return jsonify({"message" : "success"})
+
+@app.route("/answer_question/<string:question>")
+def answer_question(question):
+    if not session["titles"]:
+        session["titles"] = refresh_titles()
+
+    contextString  = ""
+    for title in session["titles"]:
+        contextString += title
+    completion = openAIClient.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": "Here are the titles of various stock news articles and reddit posts. Based on these titles, answer the questions asked to the best of your ability. Here are the titles: " + contextString},
+        {
+            "role": "user",
+            "content": question
+        }
+    ]
+    )
+    return(completion.choices[0].message.content)
 
 
 app.run(port = 9284)   
