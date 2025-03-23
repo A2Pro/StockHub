@@ -26,6 +26,8 @@ Based on the following Reddit and news scraped data, generate an actionable list
 1. Buy
 2. Short
 
+TAKE INTO ACCOUNT THE RELEVANCE OF TITLES MENTIONING TICKERS.
+
 DATA:
 {scraped_text}
 

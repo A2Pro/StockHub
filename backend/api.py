@@ -1,5 +1,7 @@
 from flask import Flask, render_template, jsonify, session
 from pymongo.mongo_client import MongoClient
+from flask_cors import CORS
+
 from dotenv import load_dotenv
 import os 
 
@@ -29,6 +31,7 @@ def refresh_titles():
     return titles
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def index():
@@ -53,7 +56,8 @@ def signup():
     data = request.get_json()
     username = data.get("email")
     password = data.get("password")
-
+    
+    print(username + " " + password)
     if not username or not password:
         return jsonify({"message": "missing_fields"}), 400
 
