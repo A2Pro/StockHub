@@ -82,7 +82,7 @@ def answer_question(question):
     contextString  = ""
     for title in session["titles"]:
         for titlex in title:
-            contextString += title
+            contextString += titlex
     completion = openAIClient.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
