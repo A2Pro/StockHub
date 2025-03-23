@@ -10,7 +10,7 @@ from openai import OpenAI
 from scrape import replace_tickers_with_titles, scrape_forbes, scrape_robinhoodpennystocksr, scrape_stockspicksr, scrape_stocksr, scrape_wsb, scrape_yahoo
 
 load_dotenv()
-mongoUri = os.getenv("MONGO_URI_STRING")
+mongoUri = os.getenv("MONGODB_URI_STRING")
 openAIKey = os.getenv("OPENAI_API_KEY")
 openAIClient = OpenAI(api_key = openAIKey)
 
@@ -33,12 +33,28 @@ def refresh_titles():
 app = Flask(__name__)
 CORS(app)
 
+app.secret_key = "erfiwaoifrjoitfgjoifrjoiwrfjwoeijf"
+
+try:
+    print("Attempting MongoDB connection...")
+    safe_uri = mongoUri.replace(mongoUri.split('@')[0], '***') if '@' in mongoUri else '***'
+    print(f"Using URI: {safe_uri}")
+    mongoClient = MongoClient(mongoUri, server_api=ServerApi('1'), 
+                            serverSelectionTimeoutMS=5000)
+    mongoClient.admin.command('ping')
+    print("MongoDB connection successful!")
+except Exception as e:
+    print(f"MongoDB connection error: {str(e)}")
+
 @app.route('/')
 def index():
     return render_template("index.html")
 
-@app.route("/login/<string:username>/<string:password>")
-def login(username, password):
+@app.route("/login")
+def login():
+    data = request.get_json()
+    username = data.get("email")
+    password = data.get("password")
     entry = passwordsDB.find_one({"username" : username})
     if(not entry):
         return jsonify({"message" : "user_not_found"})
@@ -51,7 +67,7 @@ def login(username, password):
 
 from flask import request, jsonify
 
-@app.route("/signup", methods=["POST"])
+@app.route("/signup", methods=["POST", "GET"])
 def signup():
     data = request.get_json()
     username = data.get("email")
@@ -78,7 +94,6 @@ def refresh_data():
 def answer_question(question):
     if not session["titles"]:
         session["titles"] = refresh_titles()
-
     contextString  = ""
     for title in session["titles"]:
         for titlex in title:
