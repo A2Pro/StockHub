@@ -51,23 +51,44 @@ def refresh_titles():
         replace_tickers_with_titles(title_list)
     return titles
 
+app = Flask(__name__)
+CORS(app)
+
+app.secret_key = "erfiwaoifrjoitfgjoifrjoiwrfjwoeijf"
+
+try:
+    print("Attempting MongoDB connection...")
+    safe_uri = mongoUri.replace(mongoUri.split('@')[0], '***') if '@' in mongoUri else '***'
+    print(f"Using URI: {safe_uri}")
+    mongoClient = MongoClient(mongoUri, server_api=ServerApi('1'), 
+                            serverSelectionTimeoutMS=5000)
+    mongoClient.admin.command('ping')
+    print("MongoDB connection successful!")
+except Exception as e:
+    print(f"MongoDB connection error: {str(e)}")
+
 @app.route('/')
 def index():
     return render_template("index.html")
 
-@app.route("/login/<string:username>/<string:password>")
-def login(username, password):
-    entry = passwordsDB.find_one({"username": username})
-    if not entry:
-        return jsonify({"message": "user_not_found"})
-    if entry["password"] == password:
-        session["username"] = username
-        print(f"✅ User '{username}' logged in successfully.")
-        return jsonify({"message": "success"})
-    else:
-        return jsonify({"message": "invalid_password"})
+@app.route("/login")
+def login():
+    data = request.get_json()
+    username = data.get("email")
+    password = data.get("password")
+    entry = passwordsDB.find_one({"username" : username})
+    if(not entry):
+        return jsonify({"message" : "user_not_found"})
+    if entry:
+        if(entry["password"] == password):
+            session["username"] = username
+            return jsonify({"message" : "success"})
+        else:
+            return jsonify({"message" : "invalid_password"})
 
-@app.route("/signup", methods=["POST"])
+from flask import request, jsonify
+
+@app.route("/signup", methods=["POST", "GET"])
 def signup():
     data = request.get_json()
     username = data.get("email")
@@ -95,12 +116,10 @@ def refresh_data():
 def answer_question(question):
     if "titles" not in session or not session["titles"]:
         session["titles"] = refresh_titles()
-
-    contextString = ""
-    for title_list in session["titles"]:
-        for title in title_list:
-            contextString += title + "\n"
-
+    contextString  = ""
+    for title in session["titles"]:
+        for titlex in title:
+            contextString += titlex
     completion = openAIClient.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
