@@ -50,6 +50,20 @@ except Exception as e:
 def index():
     return render_template("index.html")
 
+@app.route("/verify_auth", methods=["GET"])
+def verify_auth():
+    # Check if user is logged in via session
+    if "username" in session:
+        return jsonify({
+            "authenticated": True,
+            "username": session["username"]
+        }), 200
+    else:
+        return jsonify({
+            "authenticated": False,
+            "message": "not_authenticated"
+        }), 401
+    
 @app.route("/login")
 def login():
     data = request.get_json()
