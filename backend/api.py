@@ -1,9 +1,8 @@
-#Written by A2Pro (Aayush Palai)
-
 from flask import Flask, render_template, jsonify, session
 from pymongo.mongo_client import MongoClient
 from dotenv import load_dotenv
 import os 
+
 from pymongo.server_api import ServerApi
 from openai import OpenAI
 from scrape import replace_tickers_with_titles, scrape_forbes, scrape_robinhoodpennystocksr, scrape_stockspicksr, scrape_stocksr, scrape_wsb, scrape_yahoo
@@ -47,13 +46,24 @@ def login(username, password):
         else:
             return jsonify({"message" : "invalid_password"})
 
-@app.route("/signup/<string:username>/<string:password>")
-def signup(username, password):
-    entry = passwordsDB.find_one({"username" : username})
-    if(entry):
-        return jsonify({"message" : "username_taken"})
-    passwordsDB.insert_one({"username" : username, "password": password})
-    return jsonify({"message" : "success"})
+from flask import request, jsonify
+
+@app.route("/signup", methods=["POST"])
+def signup():
+    data = request.get_json()
+    username = data.get("email")
+    password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"message": "missing_fields"}), 400
+
+    entry = passwordsDB.find_one({"username": username})
+    if entry:
+        return jsonify({"message": "username_taken"})
+
+    passwordsDB.insert_one({"username": username, "password": password})
+    return jsonify({"message": "success"})
+
 
 @app.route("/refresh_data")
 def refresh_data():

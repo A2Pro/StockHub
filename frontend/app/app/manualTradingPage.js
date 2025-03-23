@@ -87,14 +87,83 @@ export default function TradePage() {
                             value={quantity}
                             onChange={(e) => setQuantity(e.target.value)}
                         />
-                     </div>
+                    </div>
 
+                    <div>
+                        <label>Order Type</label>
+                        <select
+                            className="w-full mt-1 px-3 py-2 bg-black text-white border border-gray-600 rounded"
+                            value={orderType}
+                            onChange={(e) => setOrderType(e.target.value)}
+                        >
+                            <option value="Market">Market</option>
+                            <option value="Limit">Limit</option>
+                        </select>
+                    </div>
 
+                    <div>
+                        <label>Choose how to buy</label>
+                        <div className="flex space-x-4 mt-2">
+                        <button
+                            onClick={() => setBuyingIn('Shares')}
+                            className={`px-3 py-1 rounded-full text-sm ${
+                            buyingIn === 'Shares'
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-700 text-gray-300'
+                            }`}
+                        >
+                            Shares
+                        </button>
+                        <button
+                            onClick={() => setBuyingIn('Dollars')}
+                            className={`px-3 py-1 rounded-full text-sm ${
+                            buyingIn === 'Dollars'
+                                ? 'bg-purple-600 text-white'
+                                : 'bg-gray-700 text-gray-300'
+                            }`}
+                        >
+                            Dollars
+                        </button>
+                        </div>
+                    </div>
 
+                    <div>
+                        <label>Time in Force</label>
+                        <select
+                        className="w-full mt-1 px-3 py-2 bg-black text-white border border-gray-600 rounded"
+                        value={timeInForce}
+                        onChange={(e) => setTimeInForce(e.target.value)}
+                        >
+                        <option value="DAY">DAY</option>
+                        <option value="GTC">GTC</option>
+                        </select>
+                    </div>
 
+                    <div className="mt-4">
+                        <p className="text-gray-400">Estimated Cost: ${estimatedCost}</p>
+                        <button
+                        className="mt-2 w-full bg-purple-600 text-white py-2 rounded disabled:opacity-50"
+                        disabled={!symbol}
+                        >
+                        Review Order
+                    </button>
+                </div>
+            </div>
+        </div>
 
-
-
-
-    )
+        {/* API Info */}
+            <div className="bg-[#1e1b2e] p-4 rounded-xl shadow text-xs">
+                <p className="mb-2 font-semibold text-white">API Keys</p>
+                <p className="text-gray-400">Endpoint</p>
+                <p className="break-all text-sm text-white">https://api.alpaca.markets</p>
+                <p className="text-gray-400 mt-2">Key</p>
+                <div className="bg-gray-800 p-2 rounded text-sm font-mono text-purple-300">
+                    AKIj30JM431CH005ASNTV
+                </div>
+                <button className="mt-2 text-purple-400 text-sm hover:underline">Regenerate</button>
+                </div>
+            </div>
+         </div>
+     </div>
+    );
 }

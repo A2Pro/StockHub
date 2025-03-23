@@ -1,6 +1,9 @@
 from openai import OpenAI
 import scrape
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -12,6 +15,7 @@ def gather_scraped_data():
     forbes_data = list(scrape.scrape_forbes() or [])
     yahoo_data = list(scrape.scrape_yahoo() or [])
     combined_data = "\n".join(wsb_data + stocks_data + picks_data + penny_data + forbes_data + yahoo_data)
+    print(combined_data)
     return combined_data
 
 def get_investment_recommendations(scraped_text):
@@ -21,15 +25,14 @@ You are an expert financial analysis AI.
 Based on the following Reddit and news scraped data, generate an actionable list of tickers:
 1. Buy
 2. Short
-3. Watchlist (only if needed)
 
 DATA:
 {scraped_text}
 
 ONLY respond in this format:
-Buy: TICKER1, TICKER2
-Short: TICKER3, TICKER4
-Watchlist: TICKER5, TICKER6
+Buy: TICKER1, TICKER2, AND SO ON
+Short: TICKER3, TICKER4, AND SO ON
+
 If there are no tickers for a section, write "None".
 """
     response = client.chat.completions.create(
