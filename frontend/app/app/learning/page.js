@@ -1,6 +1,13 @@
-'use client';
+"use client";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import dynamic from 'next/dynamic';
+
+// Correctly import the Sidebar component with SSR disabled
+const Sidebar = dynamic(() => import('../components/navbar.js'), {
+  ssr: false
+});
 
 export default function StockLessons() {
   const lessons = [
@@ -8,7 +15,7 @@ export default function StockLessons() {
       title: "Lesson 1: Introduction to Stocks",
       content: `Stocks represent ownership in a company. When you purchase a share of a company, you are buying a small piece of that company, also known as equity. As a shareholder, you have the potential to benefit from the company's growth and profitability. Companies issue stocks to raise money for expansion, operations, or other business needs.
 
-Investing in stocks means you are betting on the company’s future success. If the company performs well, its stock price typically rises, increasing the value of your investment. Conversely, if the company struggles, the stock price can fall. This is why understanding a company before investing is crucial.
+Investing in stocks means you are betting on the company's future success. If the company performs well, its stock price typically rises, increasing the value of your investment. Conversely, if the company struggles, the stock price can fall. This is why understanding a company before investing is crucial.
 
 Public companies are listed on stock exchanges like the New York Stock Exchange (NYSE) or NASDAQ. These platforms allow investors to buy and sell shares easily.
 
@@ -23,7 +30,7 @@ In addition, companies may issue different classes of stock that confer varying 
     },
     {
       title: "Lesson 2: How Stocks Make Money",
-      content: `Stocks generate returns through two main ways: capital gains and dividends. Capital gains occur when you buy a stock at a lower price and sell it at a higher price. Dividends are portions of a company’s profits paid regularly to shareholders. Not all companies pay dividends, especially high-growth companies that reinvest profits back into growth.
+      content: `Stocks generate returns through two main ways: capital gains and dividends. Capital gains occur when you buy a stock at a lower price and sell it at a higher price. Dividends are portions of a company's profits paid regularly to shareholders. Not all companies pay dividends, especially high-growth companies that reinvest profits back into growth.
 
 Investors also benefit from stock appreciation driven by market demand, company performance, and economic growth. Long-term investors often aim to combine both income (dividends) and capital growth in their portfolios.`,
       questions: [
@@ -45,9 +52,9 @@ Diversifying investments across sectors, regions, and asset classes reduces risk
     },
     {
       title: "Lesson 4: Stock Market Basics and Indexes",
-      content: `The stock market includes exchanges like NYSE and NASDAQ where investors buy and sell shares. Indexes like the S&P 500, Dow Jones, and NASDAQ Composite track the performance of selected groups of stocks and represent the market’s general health.
+      content: `The stock market includes exchanges like NYSE and NASDAQ where investors buy and sell shares. Indexes like the S&P 500, Dow Jones, and NASDAQ Composite track the performance of selected groups of stocks and represent the market's general health.
 
-Index funds allow investors to buy a slice of the entire market. These funds help diversify portfolios and are widely used in passive investing strategies to match the market’s return rather than beating it.`,
+Index funds allow investors to buy a slice of the entire market. These funds help diversify portfolios and are widely used in passive investing strategies to match the market's return rather than beating it.`,
       questions: [
         { q: "What does the S&P 500 represent?", options: ["500 government projects", "500 U.S. large companies", "500 startup ideas", "500 bonds"], correct: 1 },
         { q: "What is the purpose of a stock index?", options: ["Predict weather", "Track performance of groups of stocks", "Calculate taxes", "Print money"], correct: 1 }
@@ -71,6 +78,12 @@ Strategies like dollar-cost averaging—investing fixed amounts regularly—help
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selected, setSelected] = useState(-1);
   const [graded, setGraded] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Use effect to mark when client-side rendering is active
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const restartCourse = () => {
     setStep(0);
@@ -79,114 +92,185 @@ Strategies like dollar-cost averaging—investing fixed amounts regularly—help
     setGraded(false);
   };
 
-  const safeStep = Math.max(0, Math.min(step, lessons.length));
-
-  if (step === lessons.length) {
+  // Wait for client-side rendering before displaying content
+  if (!isClient) {
     return (
-      <div className="w-full min-h-screen bg-white text-black p-10" style={{ backgroundColor: '#f5f0ff' }}>
-        <div className="max-w-4xl mx-auto p-8 space-y-8 border-2 border-black rounded-lg shadow-2xl text-center">
-          <h1 className="text-4xl font-bold text-green-700">🎉 Course Completed! 🎉</h1>
-          <p className="text-lg">Congratulations on finishing the Intro to Stocks course. You're now better equipped to understand the stock market and make informed investing decisions.</p>
-          <Button className="bg-purple-500 hover:bg-purple-600 text-white mt-4" onClick={restartCourse}>Restart Course</Button>
+      <div className="flex h-screen bg-white">
+        <div className="w-64 bg-white shadow-lg border-r border-gray-200">
+          <Sidebar />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-600">Loading lessons...</div>
         </div>
       </div>
     );
   }
 
-  const currentLesson = lessons[safeStep];
+  // Check if course is completed
+  if (step === lessons.length) {
+    return (
+      <div className="flex h-screen bg-white">
+        {/* Sidebar */}
+        <div className="w-64 bg-white shadow-lg border-r border-gray-200">
+          <Sidebar />
+        </div>
+        
+        {/* Main content */}
+        <div className="flex-1 p-6 md:p-10 overflow-y-auto">
+          <div className="max-w-4xl mx-auto p-8 space-y-8 border border-gray-200 rounded-lg shadow-md text-center bg-white">
+            <h1 className="text-4xl font-bold text-indigo-600">🎉 Course Completed! 🎉</h1>
+            <p className="text-lg text-gray-700">Congratulations on finishing the Intro to Stocks course. You're now better equipped to understand the stock market and make informed investing decisions.</p>
+            <Button 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white mt-4" 
+              onClick={restartCourse}
+            >
+              Restart Course
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentLesson = lessons[step];
   const currentQuestion = currentLesson.questions[questionIndex];
 
   return (
-    <div className="w-full min-h-screen bg-white text-black p-10" style={{ backgroundColor: '#f5f0ff' }}>
-      <div className="max-w-4xl mx-auto p-8 space-y-8 border-2 border-black rounded-lg shadow-2xl">
-        <Progress className="bg-purple-300" value={((safeStep) / lessons.length) * 100} />
-        <p className="font-semibold">Progress: {Math.round(((safeStep) / lessons.length) * 100)}%</p>
-
-        <h1 className="text-3xl font-bold text-black">{currentLesson.title}</h1>
-
-        <p
-          className="text-lg text-black whitespace-pre-line"
-          dangerouslySetInnerHTML={{
-            __html: currentLesson.content.replace(
-              /\b(Stocks|equity|NYSE|NASDAQ|dividends|capital gains|risk|diversification|S&P 500|Dow Jones|NASDAQ Composite|long-term|dollar-cost averaging)\b/g,
-              '<strong>$1</strong>'
-            ),
-          }}
-        />
-
-        <div className="text-center py-4">
-          <div className="border border-purple-300 rounded-lg p-4 bg-purple-50 shadow-md">
-            <p className="text-purple-700 italic">{currentLesson.diagram}</p>
+    <div className="flex h-screen bg-white">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-lg border-r border-gray-200">
+        <Sidebar />
+      </div>
+      
+      {/* Main content */}
+      <div className="flex-1 overflow-y-auto p-6 md:p-10">
+        <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-6 border border-gray-200 rounded-lg shadow-md bg-white">
+          <div className="space-y-2">
+            <Progress className="bg-gray-100" value={((step) / lessons.length) * 100} />
+            <p className="font-medium text-sm text-gray-600">Progress: {Math.round(((step) / lessons.length) * 100)}%</p>
           </div>
-        </div>
 
-        <div className="space-y-4">
-          <p className="font-semibold text-purple-600">{currentQuestion.q}</p>
-          {currentQuestion.options.map((option, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="option"
-                value={index}
-                checked={selected === index}
-                onChange={() => {
-                  setSelected(index);
-                  setGraded(false);
-                }}
-                className="accent-purple-500"
-              />
-              <label className="text-black">{option}</label>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{currentLesson.title}</h1>
+
+          <div className="text-gray-700 space-y-4">
+            <p
+              className="text-base md:text-lg whitespace-pre-line"
+              dangerouslySetInnerHTML={{
+                __html: currentLesson.content.replace(
+                  /\b(Stocks|equity|NYSE|NASDAQ|dividends|capital gains|risk|diversification|S&P 500|Dow Jones|NASDAQ Composite|long-term|dollar-cost averaging)\b/g,
+                  '<span class="font-semibold text-indigo-700">$1</span>'
+                ),
+              }}
+            />
+          </div>
+
+          <div className="py-4">
+            <div className="border border-indigo-100 rounded-lg p-4 bg-indigo-50 shadow-sm">
+              <p className="text-indigo-600 italic text-center">{currentLesson.diagram}</p>
             </div>
-          ))}
+          </div>
 
-          {graded && (
-            <p className={selected === currentQuestion.correct ? "text-green-600" : "text-red-600"}>
-              {selected === currentQuestion.correct ? "Correct!" : "Incorrect. Please review the lesson content."}
-            </p>
-          )}
+          <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 space-y-4">
+            <h3 className="font-semibold text-lg text-indigo-700">Knowledge Check</h3>
+            <p className="font-medium text-gray-800">{currentQuestion.q}</p>
+            
+            <div className="space-y-3">
+              {currentQuestion.options.map((option, index) => (
+                <div 
+                  key={index} 
+                  className={`flex items-center space-x-2 p-3 rounded-md cursor-pointer transition-colors ${
+                    selected === index 
+                      ? graded 
+                        ? index === currentQuestion.correct 
+                          ? 'bg-green-50 border border-green-200' 
+                          : 'bg-red-50 border border-red-200'
+                        : 'bg-indigo-50 border border-indigo-200' 
+                      : 'hover:bg-gray-100 border border-transparent'
+                  }`}
+                  onClick={() => {
+                    setSelected(index);
+                    setGraded(false);
+                  }}
+                >
+                  <div 
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                      selected === index 
+                        ? graded
+                          ? index === currentQuestion.correct
+                            ? 'border-green-500 bg-green-500'
+                            : 'border-red-500 bg-red-500'
+                          : 'border-indigo-600 bg-indigo-600'
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {selected === index && (
+                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                    )}
+                  </div>
+                  <label className="flex-1 text-gray-800 cursor-pointer">{option}</label>
+                </div>
+              ))}
+            </div>
 
-          <Button className="bg-purple-500 hover:bg-purple-600 text-white" onClick={() => setGraded(true)}>
-            Check Answer
-          </Button>
-        </div>
+            {graded && (
+              <div className={`p-3 rounded-md ${
+                selected === currentQuestion.correct 
+                  ? "bg-green-50 text-green-700 border border-green-200" 
+                  : "bg-red-50 text-red-700 border border-red-200"
+              }`}>
+                <p className="font-medium">
+                  {selected === currentQuestion.correct 
+                    ? "✓ Correct! Well done." 
+                    : "✗ Incorrect. Please review the lesson content."}
+                </p>
+              </div>
+            )}
 
-        <div className="flex justify-between pt-4">
-          <Button
-            className="bg-purple-500 hover:bg-purple-600 text-white"
-            onClick={() => {
-              if (questionIndex > 0) {
-                setQuestionIndex(questionIndex - 1);
-              } else {
-                setStep((prev) => Math.max(prev - 1, 0));
-                setQuestionIndex(lessons[Math.max(step - 1, 0)].questions.length - 1);
-              }
-              setSelected(-1);
-              setGraded(false);
-            }}
-            disabled={safeStep === 0 && questionIndex === 0}
-          >
-            Back
-          </Button>
+            <Button 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white" 
+              onClick={() => setGraded(true)}
+              disabled={selected === -1}
+            >
+              Check Answer
+            </Button>
+          </div>
 
-          <Button
-            className="bg-purple-500 hover:bg-purple-600 text-white"
-            onClick={() => {
-              if (questionIndex < currentLesson.questions.length - 1) {
-                setQuestionIndex(questionIndex + 1);
-              } else {
-                setStep((prev) => prev + 1);
-                setQuestionIndex(0);
-              }
-              setSelected(-1);
-              setGraded(false);
-            }}
-          >
-            {questionIndex < currentLesson.questions.length - 1 ? "Next Question" : "Next Lesson"}
-          </Button>
+          <div className="flex justify-between pt-4 border-t border-gray-100">
+            <Button
+              className="bg-white hover:bg-gray-50 text-indigo-600 border border-indigo-200"
+              onClick={() => {
+                if (questionIndex > 0) {
+                  setQuestionIndex(questionIndex - 1);
+                } else {
+                  setStep((prev) => Math.max(prev - 1, 0));
+                  setQuestionIndex(lessons[Math.max(step - 1, 0)].questions.length - 1);
+                }
+                setSelected(-1);
+                setGraded(false);
+              }}
+              disabled={step === 0 && questionIndex === 0}
+            >
+              Back
+            </Button>
+
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              onClick={() => {
+                if (questionIndex < currentLesson.questions.length - 1) {
+                  setQuestionIndex(questionIndex + 1);
+                } else {
+                  setStep((prev) => prev + 1);
+                  setQuestionIndex(0);
+                }
+                setSelected(-1);
+                setGraded(false);
+              }}
+            >
+              {questionIndex < currentLesson.questions.length - 1 ? "Next Question" : "Next Lesson"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-
