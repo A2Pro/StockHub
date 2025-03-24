@@ -10,6 +10,9 @@ import PyPDF2
 import io
 from werkzeug.utils import secure_filename
 from pymongo.server_api import ServerApi
+import finnhub
+import datetime
+
 from openai import OpenAI
 from scrape import replace_tickers_with_titles, scrape_forbes, scrape_robinhoodpennystocksr, scrape_stockspicksr, scrape_stocksr, scrape_wsb, scrape_yahoo,  replace_tickers_with_titles, ticker_to_title
 
@@ -17,14 +20,14 @@ load_dotenv()
 mongoUri = os.getenv("MONGODB_URI_STRING")
 openAIKey = os.getenv("OPENAI_API_KEY")
 openAIClient = OpenAI(api_key = openAIKey)
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")  # Get Finnhub API key from environment, default to empty string
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")  
 
 mongoClient = MongoClient(mongoUri, server_api=ServerApi('1'))
 db = mongoClient["Login"]
 passwordsDB = db["Passwords"]
-userProfilesDB = db["UserProfiles"]  # Create a new collection for user profiles
+userProfilesDB = db["UserProfiles"]  
 
-# Stock market data
+
 sectors = {
     "Tech": ["AAPL", "MSFT", "NVDA", "GOOGL", "META"],
     "Healthcare": ["JNJ", "PFE", "MRK", "LLY"],
@@ -32,7 +35,7 @@ sectors = {
     "Finance": ["JPM", "BAC", "C", "GS"]
 }
 
-# Default user profile
+
 default_user_profile = {
     "starting_fund": 50000,
     "risk_tolerance": "Medium",
@@ -43,6 +46,45 @@ default_user_profile = {
     "take_profit": 0.1
 }
 
+def fetch_latest_news(num_articles=10):
+    """
+    Fetch the latest news articles using Finnhub API
+    
+    Parameters:
+        num_articles (int): Number of articles to fetch
+        
+    Returns:
+        list: List of news article dictionaries
+    """
+    
+    finnhub_client = finnhub.Client(api_key=FINNHUB_API_KEY)
+    
+    try:
+        
+        news = finnhub_client.general_news('general', min_id=0)
+        
+        
+        sorted_news = sorted(news, key=lambda x: x.get('datetime', 0), reverse=True)
+        
+        
+        formatted_news = []
+        for article in sorted_news[:num_articles]:
+            formatted_article = {
+                'title': article.get('headline', 'No title'),
+                'summary': article.get('summary', ''),
+                'url': article.get('url', ''),
+                'source': article.get('source', ''),
+                'datetime': article.get('datetime', 0),
+                'related': article.get('related', '')
+            }
+            formatted_news.append(formatted_article)
+            
+        return formatted_news
+        
+    except Exception as e:
+        print(f"Error fetching news: {e}")
+        return []
+    
 def refresh_titles():
     titles = []
     titles.append(scrape_forbes())
@@ -53,7 +95,7 @@ def refresh_titles():
     titles.append(scrape_wsb())
     for title in titles:
         for x in title:
-            # Fix 2: Pass both required arguments
+            
             replace_tickers_with_titles(x, ticker_to_title)
     return titles
 
@@ -97,6 +139,7 @@ def fetch_finnhub_candles(ticker, resolution="D", count=30):
         print(f"Error fetching data for {ticker}: {str(e)}")
         return None
 
+    
 def analyze_stocks(tickers, stop_loss, take_profit):
     """
     Analyze stocks based on stop-loss and take-profit thresholds
@@ -142,13 +185,13 @@ def analyze_stocks(tickers, stop_loss, take_profit):
             "end_price": end_price
         }
         
-        time.sleep(0.5)  # Rate limiting to avoid API issues
+        time.sleep(0.5)  
         
     return selected_stocks, analysis_results
 
-# Flask application
+
 app = Flask(__name__)
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # or 'None' if needed (with secure=True)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 CORS(app, 
      supports_credentials=True,  
@@ -206,7 +249,7 @@ def signup():
 
     passwordsDB.insert_one({"username": username, "password": password})
     
-    # Create default user profile
+    
     user_profile = default_user_profile.copy()
     user_profile["username"] = username
     userProfilesDB.insert_one(user_profile)
@@ -223,6 +266,32 @@ def verify_auth():
     
 
 
+@app.route("/latest_news", methods=["GET"])
+def latest_news():
+    try:
+        
+        num_articles = request.args.get('count', default=10, type=int)
+        
+        
+        if num_articles < 1:
+            num_articles = 1
+        elif num_articles > 50:
+            num_articles = 50
+            
+        
+        news = fetch_latest_news(num_articles)
+        
+        return jsonify({
+            "status": "success",
+            "count": len(news),
+            "articles": news
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 @app.route("/answer_question/<string:question>")
 def answer_question(question):
@@ -243,7 +312,7 @@ def answer_question(question):
     )
     return completion.choices[0].message.content
 
-# User profile endpoints
+
 @app.route("/get_user_profile", methods=["GET"])
 def get_user_profile():
     if "username" not in session:
@@ -253,12 +322,12 @@ def get_user_profile():
     user_profile = userProfilesDB.find_one({"username": username})
     
     if not user_profile:
-        # Create default profile if not exists
+        
         user_profile = default_user_profile.copy()
         user_profile["username"] = username
         userProfilesDB.insert_one(user_profile)
     
-    # Remove MongoDB ID for JSON response
+    
     if "_id" in user_profile:
         user_profile.pop("_id")
         
@@ -272,7 +341,7 @@ def update_user_profile():
     username = session["username"]
     data = request.get_json()
     
-    # Validate data
+    
     required_fields = ["starting_fund", "risk_tolerance", "investment_sector", 
                        "asset_type", "trade_frequency", "stop_loss", "take_profit"]
     
@@ -280,7 +349,7 @@ def update_user_profile():
         if field not in data:
             return jsonify({"message": f"missing_field: {field}"}), 400
     
-    # Update user profile
+    
     data["username"] = username
     userProfilesDB.update_one(
         {"username": username},
@@ -290,7 +359,7 @@ def update_user_profile():
     
     return jsonify({"message": "success"}), 200
 
-# Stock analysis endpoint
+
 @app.route("/analyze_stocks", methods=["GET"])
 def analyze_stocks_endpoint():
         
@@ -300,7 +369,7 @@ def analyze_stocks_endpoint():
     if not user_profile:
         return jsonify({"message": "user_profile_not_found"}), 404
     
-    # Get tickers for selected sector
+    
     sector = user_profile.get("investment_sector", "Tech")
     sector_tickers = sectors.get(sector, [])
     
@@ -310,11 +379,11 @@ def analyze_stocks_endpoint():
             "sector": sector
         }), 400
     
-    # Get risk parameters
+    
     stop_loss = user_profile.get("stop_loss", 0.05)
     take_profit = user_profile.get("take_profit", 0.1)
     
-    # Analyze stocks
+    
     selected_stocks, analysis_results = analyze_stocks(
         sector_tickers,
         stop_loss,
@@ -337,38 +406,38 @@ def get_sectors():
 def analyze_bank_statement():
     
     
-    # Check if file was included in the request
+    
     if 'pdf_file' not in request.files:
         return jsonify({"message": "no_file_uploaded"}), 400
     
     pdf_file = request.files['pdf_file']
     
-    # Validate file type
+    
     if pdf_file.filename == '' or not pdf_file.filename.lower().endswith('.pdf'):
         return jsonify({"message": "invalid_file_type"}), 400
     
     try:
-        # Read the PDF file
+        
         pdf_bytes = io.BytesIO(pdf_file.read())
         
-        # Create a PDF reader object
+        
         pdf_reader = PyPDF2.PdfReader(pdf_bytes)
         
-        # Extract text from all pages
+        
         text = ""
         for page_num in range(len(pdf_reader.pages)):
             page = pdf_reader.pages[page_num]
             text += page.extract_text()
         
-        # Create the prompt for OpenAI
+        
         prompt = """This is a bank statement in TXT converted from PDF form. Give me a rundown of my expenses, including things I'm spending too much on, and help me see if there's fraudulent activity. Give me general financial advice based on my spending. 
 
 Bank Statement Contents:
 """
-        # Combine prompt with extracted text
+        
         full_prompt = prompt + text
         
-        # Call OpenAI API
+        
         completion = openAIClient.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -377,7 +446,7 @@ Bank Statement Contents:
             ]
         )
         
-        # Extract and return the AI response
+        
         analysis = completion.choices[0].message.content
         
         return jsonify({
