@@ -37,12 +37,13 @@ const Form = () => {
         },
         body: JSON.stringify({ email, password }),
       });
+      navigate("/login");
 
       const data = await response.json();
       
       if (data.message === "success") {
         setMessage("Account created successfully!");
-        window.location.href("/login");
+        navigate("/login");
       } else if (data.message === "username_taken") {
         setMessage("Email already in use.");
       } else {

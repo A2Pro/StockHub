@@ -161,7 +161,7 @@ export default function TradePage() {
             <p className="break-all text-sm text-white">https://api.alpaca.markets</p>
             <p className="text-gray-400 mt-2">Key</p>
             <div className="bg-gray-800 p-2 rounded text-sm font-mono text-purple-300">
-              AKIj30JM431CH005ASNTV
+              XXXXXXXXXXXXXX
             </div>
             <button className="mt-2 text-purple-400 text-sm hover:underline">Regenerate</button>
           </div>
