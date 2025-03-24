@@ -13,16 +13,16 @@ const Slide = dynamic(() => import('../components/slide.js'), {
 });
 
 export default function SlideInAuth() {
-  // Add client-side only rendering check
+
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // This code only runs in the browser after component mounts
+
     setIsClient(true);
   }, []);
 
   if (!isClient) {
-    // Return a simple loading state when rendering on server
+
     return (
       <div className="flex h-screen bg-gray-100 items-center justify-center">
         <p>Loading...</p>
@@ -30,7 +30,6 @@ export default function SlideInAuth() {
     );
   }
 
-  // Actual component rendering - only happens client-side
   return (
     <div className="flex h-screen bg-gray-100">
       <div className="z-10 w-50 bg-white text-black shadow-lg rounded-r-lg">
