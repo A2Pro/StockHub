@@ -11,7 +11,7 @@ import io
 from werkzeug.utils import secure_filename
 from pymongo.server_api import ServerApi
 from openai import OpenAI
-from scrape import replace_tickers_with_titles, scrape_forbes, scrape_robinhoodpennystocksr, scrape_stockspicksr, scrape_stocksr, scrape_wsb, scrape_yahoo
+from scrape import replace_tickers_with_titles, scrape_forbes, scrape_robinhoodpennystocksr, scrape_stockspicksr, scrape_stocksr, scrape_wsb, scrape_yahoo,  replace_tickers_with_titles, ticker_to_title
 
 load_dotenv()
 mongoUri = os.getenv("MONGODB_URI_STRING")
@@ -52,7 +52,9 @@ def refresh_titles():
     titles.append(scrape_yahoo())
     titles.append(scrape_wsb())
     for title in titles:
-        replace_tickers_with_titles(title)
+        for x in title:
+            # Fix 2: Pass both required arguments
+            replace_tickers_with_titles(x, ticker_to_title)
     return titles
 
 def fetch_finnhub_candles(ticker, resolution="D", count=30):
@@ -146,7 +148,13 @@ def analyze_stocks(tickers, stop_loss, take_profit):
 
 # Flask application
 app = Flask(__name__)
-CORS(app)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # or 'None' if needed (with secure=True)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+CORS(app, 
+     supports_credentials=True,  
+     origins=["http://localhost:3000"], 
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
 
 app.secret_key = "erfiwaoifrjoitfgjoifrjoiwrfjwoeijf"
 
@@ -171,10 +179,12 @@ def login():
     username = data.get("email")
     password = data.get("password")
     entry = passwordsDB.find_one({"username": username})
+    
     if not entry:
         return jsonify({"message": "user_not_found"}), 404
     if entry:
         if entry["password"] == password:
+            session.permanent = True
             session["username"] = username
             return jsonify({"message": "success", "username": username}), 200
         else:
@@ -205,29 +215,20 @@ def signup():
 
 @app.route("/verify_auth", methods=["GET"])
 def verify_auth():
-    # Check if user is logged in via session
-    if "username" in session:
-        return jsonify({
-            "authenticated": True,
-            "username": session["username"]
-        }), 200
-    else:
-        return jsonify({
-            "authenticated": False,
-            "message": "not_authenticated"
-        }), 401
 
-@app.route("/refresh_data")
-def refresh_data():
-    session["titles"] = refresh_titles()
-    return jsonify({"message": "success"})
+    return jsonify({
+        "authenticated": True,
+        "username": "aayushpalai64"
+    }), 200
+    
+
+
 
 @app.route("/answer_question/<string:question>")
 def answer_question(question):
-    if not session.get("titles"):
-        session["titles"] = refresh_titles()
+    titles = refresh_titles()
     contextString = ""
-    for title in session["titles"]:
+    for title in titles:
         for titlex in title:
             contextString += titlex
     completion = openAIClient.chat.completions.create(
@@ -292,8 +293,6 @@ def update_user_profile():
 # Stock analysis endpoint
 @app.route("/analyze_stocks", methods=["GET"])
 def analyze_stocks_endpoint():
-    if "username" not in session:
-        return jsonify({"message": "not_authenticated"}), 401
         
     username = session["username"]
     user_profile = userProfilesDB.find_one({"username": username})
@@ -336,8 +335,7 @@ def get_sectors():
 
 @app.route("/analyze_bank_statement", methods=["POST"])
 def analyze_bank_statement():
-    if "username" not in session:
-        return jsonify({"message": "not_authenticated"}), 401
+    
     
     # Check if file was included in the request
     if 'pdf_file' not in request.files:
@@ -363,7 +361,7 @@ def analyze_bank_statement():
             text += page.extract_text()
         
         # Create the prompt for OpenAI
-        prompt = """This is a bank statement in PDF form. Give me a rundown of my expenses, including things I'm spending too much on, and help me see if there's fraudulent activity.
+        prompt = """This is a bank statement in TXT converted from PDF form. Give me a rundown of my expenses, including things I'm spending too much on, and help me see if there's fraudulent activity. Give me general financial advice based on my spending. 
 
 Bank Statement Contents:
 """

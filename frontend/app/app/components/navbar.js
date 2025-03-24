@@ -70,6 +70,13 @@ const Sidebar = () => {
           setSelected={setSelected}
           open={open}
         />
+        <Option
+          Icon={FiBarChart}
+          title="Financial Health"
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+        />
       </div>
 
       <ToggleClose open={open} setOpen={setOpen} />
